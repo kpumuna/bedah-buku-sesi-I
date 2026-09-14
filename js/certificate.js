@@ -5,7 +5,10 @@
 function loadImageViaFetch(url) {
   return new Promise(async (resolve, reject) => {
     try {
-      const res = await fetch(url, { mode: "cors" });
+      // EXTRA_HEADERS is defined in api.js (ngrok-skip-browser-warning).
+      // Without it the image fetch hits ngrok's HTML interstitial and the
+      // browser blocks it as a CORS failure even though the server allows *.
+      const res = await fetch(url, { mode: "cors", headers: EXTRA_HEADERS });
       if (!res.ok) throw new Error("Gagal memuat gambar template sertifikat.");
       const blob = await res.blob();
       const objUrl = URL.createObjectURL(blob);
