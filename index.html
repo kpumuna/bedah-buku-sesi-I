@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bedah Buku — KPU Kabupaten Muna</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <div class="brand-mark">BB</div>
+      <div class="brand-text">
+        <div class="t1">Bedah Buku</div>
+        <div class="t2">KPU Kabupaten Muna</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <h1 id="eventTitle">Bedah Buku</h1>
+    <div class="sub" id="eventMeta">Memuat informasi kegiatan…</div>
+    <div class="stat-line" id="statLine"></div>
+  </div>
+
+  <div class="menu-grid">
+    <a class="menu-item" href="pengumuman.html">
+      <div class="ico">📢</div>
+      <div class="t">Pengumuman Zoom</div>
+      <div class="d">Info tautan &amp; jadwal Zoom kegiatan.</div>
+    </a>
+    <a class="menu-item" href="background.html">
+      <div class="ico">🖼️</div>
+      <div class="t">Download Background</div>
+      <div class="d">Unduh background untuk Zoom / media sosial.</div>
+    </a>
+    <a class="menu-item" href="presensi.html">
+      <div class="ico">📝</div>
+      <div class="t">Isi Daftar Hadir</div>
+      <div class="d">Presensi kehadiran menggunakan email Anda.</div>
+    </a>
+    <a class="menu-item" href="sertifikat.html">
+      <div class="ico">🎓</div>
+      <div class="t">Unduh Sertifikat</div>
+      <div class="d">Ambil e-sertifikat setelah diterbitkan admin.</div>
+    </a>
+    <a class="menu-item" href="edit.html">
+      <div class="ico">✏️</div>
+      <div class="t">Edit Data Sertifikat</div>
+      <div class="d">Perbaiki data yang sudah dikirim, cari dengan email.</div>
+    </a>
+  </div>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script>
+  async function loadEventInfo() {
+    try {
+      const s = await apiGet("/api/settings");
+      document.getElementById("eventTitle").textContent = s.title || "Bedah Buku";
+      const parts = [];
+      if (s.org) parts.push("Diselenggarakan oleh " + s.org);
+      if (s.eventDate) {
+        const d = new Date(s.eventDate + "T00:00:00");
+        parts.push("pada " + d.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }));
+      }
+      if (s.place) parts.push("di " + s.place);
+      document.getElementById("eventMeta").textContent = parts.length ? parts.join(" ") + "." : "";
+    } catch (e) {
+      document.getElementById("eventMeta").textContent =
+        "Info kegiatan belum tersedia (server presensi belum aktif).";
+    }
+  }
+
+  // Not real-time — just refreshed every 30s while this page stays open.
+  async function loadStatLine() {
+    try {
+      const s = await apiGet("/api/stats");
+      document.getElementById("statLine").innerHTML =
+        `<b>${s.presensiCount}</b> peserta telah mengisi presensi.`;
+    } catch (e) {
+      document.getElementById("statLine").textContent = "";
+    }
+  }
+
+  loadEventInfo();
+  loadStatLine();
+  setInterval(loadStatLine, 30000);
+</script>
+</body>
+</html>

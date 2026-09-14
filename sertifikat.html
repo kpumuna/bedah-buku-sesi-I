@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unduh Sertifikat — Bedah Buku</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="index.html">
+      <div class="brand-mark">BB</div>
+      <div class="brand-text">
+        <div class="t1">Bedah Buku</div>
+        <div class="t2">KPU Kabupaten Muna</div>
+      </div>
+    </a>
+  </div>
+</header>
+<div class="tabs-wrap">
+  <div class="tabs">
+    <a class="tab-btn" href="index.html">Beranda</a>
+    <a class="tab-btn" href="pengumuman.html">Pengumuman Zoom</a>
+    <a class="tab-btn" href="background.html">Download Background</a>
+    <a class="tab-btn" href="presensi.html">Isi Daftar Hadir</a>
+    <a class="tab-btn active" href="sertifikat.html">Unduh Sertifikat</a>
+    <a class="tab-btn" href="edit.html">Edit Data</a>
+  </div>
+</div>
+
+<main>
+  <div class="card">
+    <h1>Unduh Sertifikat</h1>
+    <div class="sub">Masukkan email yang digunakan saat presensi.</div>
+    <div id="lookupNotice"></div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="lookupEmail" placeholder="nama@email.com">
+    </div>
+    <button class="btn primary" id="lookupBtn" style="width:auto;">Cari Sertifikat</button>
+  </div>
+
+  <div class="card cert-box" id="certCard" style="display:none;">
+    <h2>E-Sertifikat</h2>
+    <div class="sub">Nomor Sertifikat: <b id="certNoText"></b></div>
+    <canvas id="certCanvas"></canvas>
+    <div class="dl-row">
+      <button class="btn amber" id="dlPdfBtn">Unduh PDF</button>
+      <button class="btn" id="dlJpgBtn">Unduh Gambar</button>
+    </div>
+  </div>
+</main>
+
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/validate.js"></script>
+<script src="js/certificate.js"></script>
+<script>
+  let lastCanvas = null;
+  let lastNama = "";
+  let lastEmail = "";
+
+  function notice(id, html, cls) {
+    document.getElementById(id).innerHTML = html ? `<div class="notice ${cls}">${html}</div>` : "";
+  }
+
+  document.getElementById("lookupBtn").addEventListener("click", async () => {
+    notice("lookupNotice", "", "");
+    document.getElementById("certCard").style.display = "none";
+    const email = document.getElementById("lookupEmail").value.trim();
+    if (!isValidEmail(email)) {
+      notice("lookupNotice", "Masukkan email yang valid.", "error");
+      return;
+    }
+    try {
+      const data = await apiGet("/api/sertifikat/" + encodeURIComponent(email));
+      if (!data.issued) {
+        notice("lookupNotice", "Nomor sertifikat untuk email ini belum tersedia. Coba beberapa saat lagi, atau hubungi admin.", "info");
+        return;
+      }
+      const canvas = document.getElementById("certCanvas");
+      await renderCertificateToCanvas(data, canvas);
+      lastCanvas = canvas;
+      lastNama = data.nama;
+      lastEmail = data.email;
+      document.getElementById("certNoText").textContent = data.certNo;
+      document.getElementById("certCard").style.display = "block";
+    } catch (err) {
+      notice("lookupNotice", err.message + ' Belum presensi? <a href="presensi.html">Isi di sini &rarr;</a>', "error");
+    }
+  });
+
+  document.getElementById("dlJpgBtn").addEventListener("click", () => {
+    if (lastCanvas) downloadCertJpg(lastCanvas, lastNama, lastEmail);
+  });
+  document.getElementById("dlPdfBtn").addEventListener("click", () => {
+    if (lastCanvas) downloadCertPdf(lastCanvas, lastNama, lastEmail);
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edit Data Sertifikat — Bedah Buku</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="index.html">
+      <div class="brand-mark">BB</div>
+      <div class="brand-text">
+        <div class="t1">Bedah Buku</div>
+        <div class="t2">KPU Kabupaten Muna</div>
+      </div>
+    </a>
+  </div>
+</header>
+<div class="tabs-wrap">
+  <div class="tabs">
+    <a class="tab-btn" href="index.html">Beranda</a>
+    <a class="tab-btn" href="pengumuman.html">Pengumuman Zoom</a>
+    <a class="tab-btn" href="background.html">Download Background</a>
+    <a class="tab-btn" href="presensi.html">Isi Daftar Hadir</a>
+    <a class="tab-btn" href="sertifikat.html">Unduh Sertifikat</a>
+    <a class="tab-btn active" href="edit.html">Edit Data</a>
+  </div>
+</div>
+
+<main>
+  <div class="card">
+    <h1>Edit Data Sertifikat</h1>
+    <div class="sub">Masukkan email yang Anda gunakan saat presensi untuk memeriksa dan memperbaiki data.</div>
+    <div id="lookupNotice"></div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="lookupEmail" placeholder="nama@email.com">
+    </div>
+    <button class="btn primary" id="lookupBtn" style="width:auto;">Cari Data</button>
+  </div>
+
+  <div class="card" id="editCard" style="display:none;">
+    <h2>Perbaiki Data</h2>
+    <div class="sub">Email tidak dapat diubah. Ubah kolom lain lalu simpan.</div>
+    <div id="editNotice"></div>
+    <form id="editForm" novalidate>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="editEmailShown" disabled>
+      </div>
+      <div class="field" id="f-nama">
+        <label>Nama Lengkap &amp; Gelar <span class="req">*</span></label>
+        <input type="text" id="nama">
+        <div class="hint">Hanya huruf, spasi, tanda kutip satu ('), titik (.), dan koma (,) yang diperbolehkan.</div>
+        <div class="err-msg">Nama lengkap wajib diisi (min. 3 karakter, tanpa karakter khusus selain ' . ,).</div>
+      </div>
+      <div class="field" id="f-hp">
+        <label>No. WhatsApp <span class="req">*</span></label>
+        <input type="tel" id="hp">
+        <div class="err-msg">Nomor HP wajib diisi.</div>
+      </div>
+      <div class="field" id="f-instansi">
+        <label>Instansi / Organisasi Asal <span class="req">*</span></label>
+        <input type="text" id="instansi">
+        <div class="hint">Hanya huruf, spasi, tanda kutip satu ('), titik (.), dan koma (,) yang diperbolehkan.</div>
+        <div class="err-msg">Instansi wajib diisi (tanpa karakter khusus selain ' . ,).</div>
+      </div>
+      <button type="submit" class="btn primary">Simpan Perubahan</button>
+    </form>
+  </div>
+
+  <div class="card cert-box" id="certCard" style="display:none;">
+    <h2>E-Sertifikat</h2>
+    <div class="sub">Nomor Sertifikat: <b id="certNoText"></b></div>
+    <canvas id="certCanvas"></canvas>
+    <div class="dl-row">
+      <button class="btn amber" id="dlPdfBtn">Unduh PDF</button>
+      <button class="btn" id="dlJpgBtn">Unduh Gambar</button>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/validate.js"></script>
+<script src="js/certificate.js"></script>
+<script>
+  watchNameLikeField("nama");
+  watchNameLikeField("instansi");
+
+  let currentEmail = null;
+
+  function notice(id, html, cls) {
+    document.getElementById(id).innerHTML = html ? `<div class="notice ${cls}">${html}</div>` : "";
+  }
+  function setError(id, hasError) {
+    document.getElementById(id).classList.toggle("error", hasError);
+  }
+
+  document.getElementById("lookupBtn").addEventListener("click", async () => {
+    notice("lookupNotice", "", "");
+    document.getElementById("editCard").style.display = "none";
+    const email = document.getElementById("lookupEmail").value.trim();
+    if (!isValidEmail(email)) {
+      notice("lookupNotice", "Masukkan email yang valid.", "error");
+      return;
+    }
+    try {
+      const data = await apiGet("/api/presensi/" + encodeURIComponent(email));
+      currentEmail = data.email;
+      document.getElementById("editEmailShown").value = data.email;
+      document.getElementById("nama").value = data.nama;
+      document.getElementById("hp").value = data.hp;
+      document.getElementById("instansi").value = data.instansi;
+      document.getElementById("editCard").style.display = "block";
+    } catch (err) {
+      notice("lookupNotice", err.message + ' Belum presensi? <a href="presensi.html">Isi di sini &rarr;</a>', "error");
+    }
+  });
+
+  document.getElementById("editForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    notice("editNotice", "", "");
+
+    const nama = document.getElementById("nama").value.trim();
+    const hp = document.getElementById("hp").value.trim();
+    const instansi = document.getElementById("instansi").value.trim();
+    const namaValid = isValidName(nama);
+    const hpValid = hp.length >= 8;
+    const instansiValid = isValidInstansi(instansi);
+
+    setError("f-nama", !namaValid);
+    setError("f-hp", !hpValid);
+    setError("f-instansi", !instansiValid);
+    if (!namaValid || !hpValid || !instansiValid) return;
+
+    try {
+      await apiSend("PUT", "/api/presensi/" + encodeURIComponent(currentEmail), {
+        nama, email: currentEmail, hp, instansi,
+      });
+      notice("editNotice", "Perubahan data berhasil disimpan.", "success");
+      await showCertificateIfIssued(currentEmail);
+    } catch (err) {
+      notice("editNotice", err.message, "error");
+    }
+  });
+
+  let lastCanvas = null;
+  let lastNama = "";
+  let lastEmail = "";
+
+  async function showCertificateIfIssued(email) {
+    document.getElementById("certCard").style.display = "none";
+    try {
+      const data = await apiGet("/api/sertifikat/" + encodeURIComponent(email));
+      if (!data.issued) {
+        notice("editNotice", "Perubahan data berhasil disimpan, namun penerbitan nomor sertifikat tertunda. Coba buka halaman Unduh Sertifikat sesaat lagi, atau hubungi admin.", "success");
+        return;
+      }
+      const canvas = document.getElementById("certCanvas");
+      await renderCertificateToCanvas(data, canvas);
+      lastCanvas = canvas;
+      lastNama = data.nama;
+      lastEmail = data.email;
+      document.getElementById("certNoText").textContent = data.certNo;
+      document.getElementById("certCard").style.display = "block";
+    } catch (err) {
+      // Non-fatal: the edit itself already succeeded.
+    }
+  }
+
+  document.getElementById("dlJpgBtn").addEventListener("click", () => {
+    if (lastCanvas) downloadCertJpg(lastCanvas, lastNama, lastEmail);
+  });
+  document.getElementById("dlPdfBtn").addEventListener("click", () => {
+    if (lastCanvas) downloadCertPdf(lastCanvas, lastNama, lastEmail);
+  });
+</script>
+</body>
+</html>

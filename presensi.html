@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Isi Daftar Hadir — Bedah Buku</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="index.html">
+      <div class="brand-mark">BB</div>
+      <div class="brand-text">
+        <div class="t1">Bedah Buku</div>
+        <div class="t2">KPU Kabupaten Muna</div>
+      </div>
+    </a>
+  </div>
+</header>
+<div class="tabs-wrap">
+  <div class="tabs">
+    <a class="tab-btn" href="index.html">Beranda</a>
+    <a class="tab-btn" href="pengumuman.html">Pengumuman Zoom</a>
+    <a class="tab-btn" href="background.html">Download Background</a>
+    <a class="tab-btn active" href="presensi.html">Isi Daftar Hadir</a>
+    <a class="tab-btn" href="sertifikat.html">Unduh Sertifikat</a>
+    <a class="tab-btn" href="edit.html">Edit Data</a>
+  </div>
+</div>
+
+<main>
+  <div class="card">
+    <h1>Formulir Kehadiran Peserta</h1>
+    <div class="sub">Data ini akan digunakan untuk penerbitan e-sertifikat. Nomor sertifikat diterbitkan otomatis setelah presensi tersimpan.</div>
+
+    <div id="checkNotice"></div>
+
+    <div class="field" id="f-email">
+      <label>Email Aktif <span class="req">*</span></label>
+      <input type="email" id="email" placeholder="nama@email.com">
+      <div class="err-msg">Email yang valid wajib diisi.</div>
+      <div class="hint">Email ini menjadi kunci pencarian data Anda — gunakan email yang aktif dan mudah diingat. Kami cek dulu apakah email ini sudah pernah presensi.</div>
+    </div>
+    <button type="button" class="btn primary" id="checkEmailBtn" style="width:auto;">Cek Email</button>
+
+    <form id="presensiForm" novalidate style="display:none; margin-top:20px;">
+      <div id="formNotice"></div>
+      <div class="field" id="f-nama">
+        <label>Nama Lengkap &amp; Gelar <span class="req">*</span></label>
+        <input type="text" id="nama" placeholder="Contoh: Arianto Pratama, S.T">
+        <div class="hint">Hanya huruf, spasi, tanda kutip satu ('), titik (.), dan koma (,) yang diperbolehkan.</div>
+        <div class="err-msg">Nama lengkap wajib diisi (min. 3 karakter, tanpa karakter khusus selain ' . ,).</div>
+      </div>
+      <div class="field" id="f-hp">
+        <label>No. WhatsApp <span class="req">*</span></label>
+        <input type="tel" id="hp" placeholder="08xxxxxxxxxx">
+        <div class="err-msg">Nomor HP wajib diisi.</div>
+      </div>
+      <div class="field" id="f-instansi">
+        <label>Instansi / Organisasi Asal <span class="req">*</span></label>
+        <input type="text" id="instansi" placeholder="Contoh: PPK Kecamatan Katobu">
+        <div class="hint">Hanya huruf, spasi, tanda kutip satu ('), titik (.), dan koma (,) yang diperbolehkan.</div>
+        <div class="err-msg">Instansi wajib diisi (tanpa karakter khusus selain ' . ,).</div>
+      </div>
+      <button type="submit" class="btn primary">Simpan Presensi</button>
+    </form>
+  </div>
+
+  <div class="card cert-box" id="certCard" style="display:none;">
+    <h2>E-Sertifikat</h2>
+    <div class="sub">Nomor Sertifikat: <b id="certNoText"></b></div>
+    <canvas id="certCanvas"></canvas>
+    <div class="dl-row">
+      <button class="btn amber" id="dlPdfBtn">Unduh PDF</button>
+      <button class="btn" id="dlJpgBtn">Unduh Gambar</button>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/validate.js"></script>
+<script src="js/certificate.js"></script>
+<script>
+  watchNameLikeField("nama");
+  watchNameLikeField("instansi");
+
+  function setError(id, hasError) {
+    document.getElementById(id).classList.toggle("error", hasError);
+  }
+  function notice(html, cls) {
+    document.getElementById("formNotice").innerHTML = html ? `<div class="notice ${cls}">${html}</div>` : "";
+  }
+  function checkNotice(html, cls) {
+    document.getElementById("checkNotice").innerHTML = html ? `<div class="notice ${cls}">${html}</div>` : "";
+  }
+
+  let checkedEmail = null;
+
+  // Checking the email first (instead of only discovering a duplicate after
+  // filling in the whole form) avoids wasted typing and routes an existing
+  // participant straight to the edit page.
+  document.getElementById("checkEmailBtn").addEventListener("click", async () => {
+    checkNotice("", "");
+    document.getElementById("presensiForm").style.display = "none";
+    checkedEmail = null;
+
+    const email = document.getElementById("email").value.trim();
+    setError("f-email", !isValidEmail(email));
+    if (!isValidEmail(email)) {
+      checkNotice("Masukkan email yang valid.", "error");
+      return;
+    }
+
+    try {
+      await apiGet("/api/presensi/" + encodeURIComponent(email));
+      // 200 = a record already exists for this email.
+      checkNotice(
+        'Email ini sudah pernah presensi. Silakan gunakan halaman <a href="edit.html">Edit Data Sertifikat</a> untuk memperbarui atau melihat sertifikat Anda.',
+        "info"
+      );
+    } catch (err) {
+      // 404 = available; anything else is a real error, don't proceed either way.
+      if (/tidak ditemukan/i.test(err.message)) {
+        checkedEmail = email;
+        checkNotice("Email tersedia — silakan lengkapi data di bawah ini.", "success");
+        document.getElementById("presensiForm").style.display = "block";
+      } else {
+        checkNotice(err.message, "error");
+      }
+    }
+  });
+
+  // Changing the email after a successful check invalidates that check.
+  document.getElementById("email").addEventListener("input", () => {
+    if (checkedEmail !== null) {
+      checkedEmail = null;
+      document.getElementById("presensiForm").style.display = "none";
+      checkNotice("Email diubah — klik \"Cek Email\" lagi sebelum melanjutkan.", "info");
+    }
+  });
+
+  document.getElementById("presensiForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    notice("", "");
+
+    const nama = document.getElementById("nama").value.trim();
+    const email = checkedEmail || document.getElementById("email").value.trim();
+    const hp = document.getElementById("hp").value.trim();
+    const instansi = document.getElementById("instansi").value.trim();
+    const namaValid = isValidName(nama);
+    const hpValid = hp.length >= 8;
+    const instansiValid = isValidInstansi(instansi);
+
+    setError("f-nama", !namaValid);
+    setError("f-hp", !hpValid);
+    setError("f-instansi", !instansiValid);
+    if (!namaValid || !hpValid || !instansiValid) return;
+
+    try {
+      await apiSend("POST", "/api/presensi", { nama, email, hp, instansi });
+      notice("Presensi berhasil disimpan.", "success");
+      this.reset();
+      this.style.display = "none";
+      checkedEmail = null;
+      document.getElementById("email").value = "";
+      checkNotice("", "");
+      await showCertificateIfIssued(email);
+    } catch (err) {
+      const isDup = /sudah terdaftar/i.test(err.message);
+      notice(
+        err.message + (isDup ? ' <a href="edit.html">Buka halaman Edit Data Sertifikat &rarr;</a>' : ""),
+        "error"
+      );
+    }
+  });
+
+  let lastCanvas = null;
+  let lastNama = "";
+  let lastEmail = "";
+
+  async function showCertificateIfIssued(email) {
+    document.getElementById("certCard").style.display = "none";
+    try {
+      const data = await apiGet("/api/sertifikat/" + encodeURIComponent(email));
+      if (!data.issued) {
+        notice("Presensi berhasil disimpan, namun penerbitan nomor sertifikat tertunda. Coba buka halaman Unduh Sertifikat sesaat lagi, atau hubungi admin.", "success");
+        return;
+      }
+      const canvas = document.getElementById("certCanvas");
+      await renderCertificateToCanvas(data, canvas);
+      lastCanvas = canvas;
+      lastNama = data.nama;
+      lastEmail = data.email;
+      document.getElementById("certNoText").textContent = data.certNo;
+      document.getElementById("certCard").style.display = "block";
+    } catch (err) {
+      // Non-fatal: presensi itself already succeeded.
+    }
+  }
+
+  document.getElementById("dlJpgBtn").addEventListener("click", () => {
+    if (lastCanvas) downloadCertJpg(lastCanvas, lastNama, lastEmail);
+  });
+  document.getElementById("dlPdfBtn").addEventListener("click", () => {
+    if (lastCanvas) downloadCertPdf(lastCanvas, lastNama, lastEmail);
+  });
+</script>
+</body>
+</html>
