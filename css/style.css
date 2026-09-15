@@ -19,8 +19,8 @@ header.top{ background:var(--panel); border-bottom:1px solid var(--line); }
 .brand-text .t2{ font-size:11px; color:var(--ink-faint); }
 
 .tabs-wrap{ background:var(--panel); border-bottom:1px solid var(--line); position:sticky; top:0; z-index:5; }
-.tabs{ max-width:920px; margin:0 auto; padding:10px 20px; display:flex; gap:8px; overflow-x:auto; }
-.tab-btn{ border:1px solid var(--line); background:#1F2622; padding:9px 16px; border-radius:20px; font-size:13px; font-weight:600; color:var(--ink-soft); cursor:pointer; white-space:nowrap; text-decoration:none; }
+.tabs{ max-width:920px; margin:0 auto; padding:10px 20px; display:flex; flex-wrap:wrap; gap:8px; }
+.tab-btn{ border:1px solid var(--line); background:#1F2622; padding:9px 16px; border-radius:20px; font-size:13px; font-weight:600; color:var(--ink-soft); cursor:pointer; text-decoration:none; }
 .tab-btn.active{ background:var(--teal); border-color:var(--teal); color:#fff; }
 
 main{ max-width:920px; margin:0 auto; padding:26px 20px 60px; }
