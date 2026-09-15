@@ -68,6 +68,10 @@
     </form>
   </div>
 
+  <div id="processingNotice" class="notice info" style="display:none;">
+    ⏳ Mohon tunggu di halaman ini — sertifikat Anda sedang diproses…
+  </div>
+
   <div class="card cert-box" id="certCard" style="display:none;">
     <h2>E-Sertifikat</h2>
     <div class="sub">Nomor Sertifikat: <b id="certNoText"></b></div>
@@ -168,7 +172,13 @@
       checkedEmail = null;
       document.getElementById("email").value = "";
       checkNotice("", "");
-      await showCertificateIfIssued(email);
+      const proc = document.getElementById("processingNotice");
+      proc.style.display = "block";
+      try {
+        await showCertificateIfIssued(email);
+      } finally {
+        proc.style.display = "none";
+      }
     } catch (err) {
       const isDup = /sudah terdaftar/i.test(err.message);
       notice(
