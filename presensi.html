@@ -43,13 +43,13 @@
       <div class="err-msg">Email yang valid wajib diisi.</div>
       <div class="hint">Email ini menjadi kunci pencarian data Anda — gunakan email yang aktif dan mudah diingat. Kami cek dulu apakah email ini sudah pernah presensi.</div>
     </div>
-    <button type="button" class="btn primary" id="checkEmailBtn" style="width:auto;">Cek Email</button>
+    <button type="button" class="btn primary" id="checkEmailBtn" style="width:auto;">Gunakan Email</button>
 
     <form id="presensiForm" novalidate style="display:none; margin-top:20px;">
       <div id="formNotice"></div>
       <div class="field" id="f-nama">
         <label>Nama Lengkap &amp; Gelar <span class="req">*</span></label>
-        <input type="text" id="nama" placeholder="Contoh: Arianto Pratama, S.T">
+        <input type="text" id="nama" placeholder="">
         <div class="hint">Hanya huruf, spasi, tanda kutip satu ('), titik (.), dan koma (,) yang diperbolehkan.</div>
         <div class="err-msg">Nama lengkap wajib diisi (min. 3 karakter, tanpa karakter khusus selain ' . ,).</div>
       </div>
@@ -60,7 +60,7 @@
       </div>
       <div class="field" id="f-instansi">
         <label>Instansi / Organisasi Asal <span class="req">*</span></label>
-        <input type="text" id="instansi" placeholder="Contoh: PPK Kecamatan Katobu">
+        <input type="text" id="instansi" placeholder="">
         <div class="hint">Hanya huruf, spasi, tanda kutip satu ('), titik (.), dan koma (,) yang diperbolehkan.</div>
         <div class="err-msg">Instansi wajib diisi (tanpa karakter khusus selain ' . ,).</div>
       </div>
@@ -139,7 +139,7 @@
     if (checkedEmail !== null) {
       checkedEmail = null;
       document.getElementById("presensiForm").style.display = "none";
-      checkNotice("Email diubah — klik \"Cek Email\" lagi sebelum melanjutkan.", "info");
+      checkNotice("Email diubah — klik \"Gunakan Email\" lagi sebelum melanjutkan.", "info");
     }
   });
 

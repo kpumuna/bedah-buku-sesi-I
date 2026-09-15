@@ -62,7 +62,9 @@
   async function loadEventInfo() {
     try {
       const s = await apiGet("/api/settings");
-      document.getElementById("eventTitle").textContent = s.title || "Bedah Buku";
+      // Strip accidental "dengan judul" phrase if present in the stored title.
+      const rawTitle = (s.title || "Bedah Buku").replace(/\s*dengan judul\s*/i, " ").trim();
+      document.getElementById("eventTitle").textContent = rawTitle;
       const parts = [];
       if (s.org) parts.push("Diselenggarakan oleh " + s.org);
       if (s.eventDate) {
