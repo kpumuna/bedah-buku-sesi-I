@@ -60,6 +60,7 @@ main{ max-width:920px; margin:0 auto; padding:26px 20px 60px; }
 .notice.info{ background:#1F2622; border:1px solid var(--line); color:var(--ink-soft); }
 .notice.error{ background:rgba(227,120,120,0.12); border:1px solid #5A3232; color:#E37878; }
 .notice.success{ background:var(--teal-soft); border:1px solid rgba(102,3,0,0.4); color:var(--teal-text); }
+.notice.available{ background:rgba(38,100,62,0.18); border:1px solid rgba(38,100,62,0.45); color:#7DC98E; }
 
 .cert-box img, .cert-box canvas{ width:100%; border-radius:10px; border:1px solid var(--line); display:block; margin-bottom:14px; }
 .dl-row{ display:flex; gap:10px; }

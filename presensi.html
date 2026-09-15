@@ -24,6 +24,7 @@
     <a class="tab-btn" href="index.html">Beranda</a>
     <a class="tab-btn" href="pengumuman.html">Pengumuman Zoom</a>
     <a class="tab-btn" href="background.html">Download Background</a>
+    <a class="tab-btn" href="materi.html">Download Materi</a>
     <a class="tab-btn active" href="presensi.html">Isi Daftar Hadir</a>
     <a class="tab-btn" href="sertifikat.html">Unduh Sertifikat</a>
     <a class="tab-btn" href="edit.html">Edit Data</a>
@@ -130,7 +131,7 @@
       // 404 = available; anything else is a real error, don't proceed either way.
       if (/tidak ditemukan/i.test(err.message)) {
         checkedEmail = email;
-        checkNotice("Email tersedia — silakan lengkapi data di bawah ini.", "success");
+        checkNotice("Email tersedia — silakan lengkapi data di bawah ini.", "available");
         document.getElementById("presensiForm").style.display = "block";
       } else {
         checkNotice(err.message, "error");
